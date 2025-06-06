@@ -28,6 +28,197 @@ import report_generator
 
 from database_connection import db
 
+GLOBAL_STYLESHEET = """
+    /* Общие стили для всех виджетов */
+    QWidget {
+        font-family: 'Arial', sans-serif;
+        color: #2c3e50;
+    }
+
+    /* Стили для QGroupBox */
+    QGroupBox {
+        font-weight: bold;
+        font-size: 14px;
+        border: 1px solid #dfe6e9;
+        border-radius: 5px;
+        margin-top: 20px;
+        background-color: #f8f9fa;
+    }
+
+    QGroupBox::title {
+        subcontrol-origin: margin;
+        subcontrol-position: top left;
+        padding: 5px 10px;
+        background-color: #f8f9fa;
+    }
+
+    /* Стили для меток */
+    QLabel {
+        font-size: 12px;
+        color: #2c3e50;
+    }
+
+    /* Стили для выпадающих списков */
+    QComboBox {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        padding: 5px 10px;
+        background-color: white;
+        font-size: 12px;
+    }
+
+    QComboBox::drop-down {
+        border-left: 1px solid #ced4da;
+        padding: 0 5px;
+    }
+
+    QComboBox::down-arrow {
+        width: 10px;
+        height: 10px;
+    }
+
+    /* Стили для полей ввода и QDateEdit */
+    QLineEdit, QDateEdit {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        padding: 5px 10px;
+        font-size: 12px;
+        background-color: white;
+    }
+
+    /* Стили для таблицы */
+    QTableWidget {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        background-color: white;
+        font-size: 14px;
+    }
+
+    QTableWidget::item {
+        padding: 5px;
+    }
+
+    QHeaderView::section {
+        background-color: #e9ecef;
+        padding: 5px;
+        border: 1px solid #ced4da;
+        font-weight: bold;
+    }
+
+    /* Стили для вкладок */
+    QTabWidget::pane {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+    }
+
+    QTabBar::tab {
+        background-color: #e9ecef;
+        border: 1px solid #ced4da;
+        padding: 8px 16px;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+    }
+
+    QTabBar::tab:selected {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+
+    /* Общие стили для кнопок */
+    QPushButton {
+        border-radius: 5px;
+        padding: 8px 16px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    /* Основная кнопка (синяя) */
+    QPushButton#primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+    }
+
+    QPushButton#primary:hover {
+        background-color: #0069d9;
+    }
+
+    /* Вторичная кнопка (серая) */
+    QPushButton#secondary {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+    }
+
+    QPushButton#secondary:hover {
+        background-color: #5a6268;
+    }
+
+    /* Кнопка успеха (зеленая) */
+    QPushButton#success {
+        background-color: #28a745;
+        color: white;
+        border: none;
+    }
+
+    QPushButton#success:hover {
+        background-color: #218838;
+    }
+
+    /* Кнопка опасности (красная) */
+    QPushButton#danger {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+    }
+
+    QPushButton#danger:hover {
+        background-color: #c82333;
+    }
+    
+    /* Кнопка успеха (очень тусклый зеленый) */
+    QPushButton#successS {
+    background-color: #A5D6A7;
+    color: #2c3e50;
+    border: none;
+    }
+
+    QPushButton#success:hover {
+    background-color: #81C784;
+    }
+    
+    /* Кнопка опасности (очень тусклый красный) */
+    QPushButton#dangerS {
+    background-color: #FFAB91;
+    color: #2c3e50;
+    border: none;
+    }
+
+    QPushButton#danger:hover {
+    background-color: #FF8A65;
+    }
+
+    /* Кнопка информации (голубая) */
+    QPushButton#info {
+        background-color: #17a2b8;
+        color: white;
+        border: none;
+    }
+
+    QPushButton#info:hover {
+        background-color: #138496;
+    }
+
+    /* Стили для QFrame */
+    QFrame#infoFrame {
+        background-color: #f8f9fa;
+        border: 1px solid #dfe6e9;
+        border-radius: 5px;
+        padding: 10px;
+    }
+"""
+
 # Попытка импорта классов из app.utils
 try:
     from app.utils.document_generator import DocumentGenerator
@@ -46,8 +237,8 @@ class EmailSender:
         self.smtp_server = smtp_server
         self.port = port
         # Эти данные должны быть настроены в реальном приложении
-        self.username = "medcenter.example@gmail.com"  # Заменить на реальный адрес
-        self.app_password = "app_password_here"         # Заменить на пароль приложения Gmail
+        self.username = "hinaways.ru@gmail.com"  # Заменить на реальный адрес
+        self.app_password = "xnjd vjtq xspk epzx"         # Заменить на пароль приложения Gmail
         self.test_mode = test_mode
     
     def send_email(self, recipient_email, subject, message, attachments=None):
@@ -184,155 +375,155 @@ class EmailSender:
 
 class DocumentGenerator:
     """Класс для создания документов в разных форматах"""
-    
+
     def __init__(self):
         """Инициализация генератора документов"""
         pass
-    
+
     def generate_analysis_report(self, result_details):
         """
         Генерация отчета с результатами анализов в формате Word
-        
+
         :param result_details: Словарь с данными результатов анализа
         :return: Путь к созданному файлу
         """
         try:
             # Создание документа Word
             doc = docx.Document()
-            
+
             # Настройка стилей
             style = doc.styles['Normal']
             style.font.name = 'Times New Roman'
             style.font.size = Pt(12)
-            
+
             # Заголовок документа
             title = doc.add_heading('РЕЗУЛЬТАТЫ МЕДИЦИНСКОГО АНАЛИЗА', level=1)
             title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            
+
             # Информация о пациенте
             doc.add_heading('Информация о пациенте', level=2)
-            
+
             patient_table = doc.add_table(rows=3, cols=2)
             patient_table.style = 'Table Grid'
-            
+
             # Заполнение данных пациента
             patient = result_details['patient']
-            
+
             cell = patient_table.cell(0, 0)
             cell.text = 'ФИО пациента:'
-            
+
             cell = patient_table.cell(0, 1)
             cell.text = patient.get('full_name', '')
-            
+
             cell = patient_table.cell(1, 0)
             cell.text = 'Дата рождения:'
-            
+
             cell = patient_table.cell(1, 1)
             cell.text = patient.get('birth_date', '')
-            
+
             cell = patient_table.cell(2, 0)
             cell.text = 'Полис ОМС:'
-            
+
             cell = patient_table.cell(2, 1)
             cell.text = patient.get('insurance_policy', '')
-            
+
             # Информация об анализе
             doc.add_paragraph('')  # Пустой параграф для отступа
             doc.add_heading('Информация об анализе', level=2)
-            
+
             analysis_table = doc.add_table(rows=4, cols=2)
             analysis_table.style = 'Table Grid'
-            
+
             # Заполнение данных анализа
             cell = analysis_table.cell(0, 0)
             cell.text = 'Тип анализа:'
-            
+
             cell = analysis_table.cell(0, 1)
             cell.text = result_details['analysis_type'].get('name', '')
-            
+
             cell = analysis_table.cell(1, 0)
             cell.text = 'Дата взятия пробы:'
-            
+
             cell = analysis_table.cell(1, 1)
             cell.text = result_details.get('date_taken', '')
-            
+
             cell = analysis_table.cell(2, 0)
             cell.text = 'Дата выполнения:'
-            
+
             cell = analysis_table.cell(2, 1)
             cell.text = result_details.get('result_date', '')
-            
+
             cell = analysis_table.cell(3, 0)
             cell.text = 'Лаборант:'
-            
+
             cell = analysis_table.cell(3, 1)
             cell.text = result_details.get('lab_technician', '')
-            
+
             # Результаты анализа
             doc.add_paragraph('')  # Пустой параграф для отступа
             doc.add_heading('Результаты', level=2)
-            
+
             # Парсинг JSON результатов
             try:
                 result_values = json.loads(result_details.get('results', '{}'))
             except json.JSONDecodeError:
                 result_values = {}
-            
+
             # Если результаты есть, создаем таблицу с ними
             if result_values:
                 results_table = doc.add_table(rows=1, cols=3)
                 results_table.style = 'Table Grid'
-                
+
                 # Заголовки таблицы
                 header_cells = results_table.rows[0].cells
                 header_cells[0].text = 'Параметр'
                 header_cells[1].text = 'Значение'
                 header_cells[2].text = 'Норма'
-                
+
                 # Заполнение результатов
                 for param, value in result_values.items():
                     # Добавление новой строки
                     row_cells = results_table.add_row().cells
                     row_cells[0].text = param
                     row_cells[1].text = str(value)
-                    
+
                     # Нормальные значения (для примера)
                     normal_values = self._get_normal_values(param)
                     row_cells[2].text = normal_values
             else:
                 doc.add_paragraph('Нет данных о результатах анализа.')
-            
+
             # Заключение
             doc.add_paragraph('')  # Пустой параграф для отступа
             doc.add_heading('Заключение', level=2)
-            
+
             if result_details.get('conclusion'):
                 doc.add_paragraph(result_details.get('conclusion'))
             else:
                 doc.add_paragraph('Заключение отсутствует')
-            
+
             # Дата и подпись
             doc.add_paragraph('')  # Пустой параграф для отступа
             doc.add_paragraph(f"Дата: {result_details.get('result_date', '')}")
             doc.add_paragraph('Подпись врача: ___________________')
-            
+
             # Создание временного файла для сохранения документа
             file_name = f"analysis_result_{result_details.get('id')}.docx"
             file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_name)
-            
+
             # Сохранение документа
             doc.save(file_path)
-            
+
             return file_path
-            
+
         except Exception as e:
             print(f"Ошибка при создании документа: {str(e)}")
             return None
-    
+
     def _get_normal_values(self, parameter):
         """
         Получение нормальных значений для параметра анализа
-        
+
         :param parameter: Имя параметра анализа
         :return: Строка с нормальными значениями
         """
@@ -354,7 +545,7 @@ class DocumentGenerator:
             'Белок': 'Отсутствует',
             'Кетоновые тела': 'Отсутствуют'
         }
-        
+
         return normal_values.get(parameter, 'Не указано')
 
 
@@ -442,10 +633,12 @@ class AddEditUserDialog(QDialog):
         buttons_layout = QHBoxLayout()
         
         save_button = QPushButton("Сохранить")
+        save_button.setObjectName("success")
         save_button.clicked.connect(self.save_user)
         buttons_layout.addWidget(save_button)
         
         cancel_button = QPushButton("Отмена")
+        cancel_button.setObjectName("secondary")
         cancel_button.clicked.connect(self.reject)
         buttons_layout.addWidget(cancel_button)
         
@@ -600,26 +793,28 @@ class UserListWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setup_ui()
-    
+
     def setup_ui(self):
         """Настройка интерфейса"""
         layout = QVBoxLayout(self)
-        
+
         # Верхняя панель с кнопками
         top_panel = QHBoxLayout()
-        
+
         refresh_button = QPushButton("Обновить")
+        refresh_button.setObjectName("primary")
         refresh_button.clicked.connect(self.load_users)
         top_panel.addWidget(refresh_button)
-        
+
         add_button = QPushButton("Добавить пользователя")
+        add_button.setObjectName("success")
         add_button.clicked.connect(self.add_user)
         top_panel.addWidget(add_button)
-        
+
         top_panel.addStretch()
-        
+
         layout.addLayout(top_panel)
-        
+
         # Таблица пользователей
         self.users_table = QTableWidget()
         self.users_table.setColumnCount(6)
@@ -627,9 +822,9 @@ class UserListWidget(QWidget):
             "Логин", "ФИО", "Роль", "Email", "Последний вход", "Действия"
         ])
         self.users_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        
+
         layout.addWidget(self.users_table)
-        
+
         # Загрузка пользователей
         self.load_users()
     
@@ -670,16 +865,23 @@ class UserListWidget(QWidget):
             actions_widget = QWidget()
             actions_layout = QHBoxLayout(actions_widget)
             actions_layout.setContentsMargins(0, 0, 0, 0)
-            
+
+            # Кнопки действий
             edit_button = QPushButton("Редактировать")
+            edit_button.setObjectName("primary")
             edit_button.clicked.connect(lambda checked, u=user: self.edit_user(u))
             actions_layout.addWidget(edit_button)
-            
+
             delete_button = QPushButton("Удалить")
+            delete_button.setObjectName("danger")
             delete_button.clicked.connect(lambda checked, u=user: self.delete_user(u))
             actions_layout.addWidget(delete_button)
             
             self.users_table.setCellWidget(row, 5, actions_widget)
+
+            # Установка высоты строк
+            for row in range(self.users_table.rowCount()):
+                self.users_table.setRowHeight(row, 60)  # Устанавливаем высоту 60 пикселей
     
     def add_user(self):
         """Добавление нового пользователя"""
@@ -748,6 +950,7 @@ class SystemStatisticsWidget(QWidget):
         self.end_date.setCalendarPopup(True)
         
         apply_button = QPushButton("Применить")
+        apply_button.setObjectName("primary")
         apply_button.clicked.connect(self.load_statistics)
         
         top_panel.addWidget(period_label)
@@ -756,35 +959,15 @@ class SystemStatisticsWidget(QWidget):
         top_panel.addWidget(self.end_date)
         top_panel.addWidget(apply_button)
         top_panel.addStretch()
-        
+
         # Кнопки для создания отчетов
         report_button = QPushButton("Создать отчет Excel")
-        report_button.setStyleSheet("""
-            QPushButton {
-                background-color: #28a745;
-                color: white;
-                padding: 5px 10px;
-                border-radius: 3px;
-            }
-            QPushButton:hover {
-                background-color: #218838;
-            }
-        """)
+        report_button.setObjectName("success")
         report_button.clicked.connect(self.generate_excel_report)
         top_panel.addWidget(report_button)
-        
+
         csv_button = QPushButton("Создать отчет CSV")
-        csv_button.setStyleSheet("""
-            QPushButton {
-                background-color: #17a2b8;
-                color: white;
-                padding: 5px 10px;
-                border-radius: 3px;
-            }
-            QPushButton:hover {
-                background-color: #138496;
-            }
-        """)
+        csv_button.setObjectName("info")
         csv_button.clicked.connect(self.generate_csv_report)
         top_panel.addWidget(csv_button)
         
@@ -1110,56 +1293,57 @@ class PatientListWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setup_ui()
-    
+
     def setup_ui(self):
         """Настройка интерфейса"""
         layout = QVBoxLayout(self)
-        
+
         # Верхняя панель с кнопками и поиском
         top_panel = QHBoxLayout()
-        
+
         # Кнопка добавления нового пациента
         add_button = QPushButton("Добавить пациента")
-        add_button.setStyleSheet("""
-            QPushButton {
-                background-color: #28a745;
-                color: white;
-                padding: 5px 10px;
-                border-radius: 3px;
-            }
-            QPushButton:hover {
-                background-color: #218838;
-            }
-        """)
+        add_button.setObjectName("success")
         add_button.clicked.connect(self.add_patient)
         top_panel.addWidget(add_button)
-        
+
         # Поле поиска
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Поиск пациента")
         self.search_input.textChanged.connect(self.filter_patients)
         top_panel.addWidget(self.search_input)
-        
+
         # Кнопка обновления списка
         refresh_button = QPushButton("Обновить")
+        refresh_button.setObjectName("primary")
         refresh_button.clicked.connect(self.load_patients)
         top_panel.addWidget(refresh_button)
-        
+
         top_panel.addStretch()
-        
+
         layout.addLayout(top_panel)
-        
+
         # Таблица пациентов
         self.patients_table = QTableWidget()
         self.patients_table.setColumnCount(7)
         self.patients_table.setHorizontalHeaderLabels([
             "ID", "ФИО", "Дата рождения", "Пол", "Телефон", "Email", "Действия"
         ])
-        self.patients_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # Устанавливаем фиксированную ширину для столбца ID
+        self.patients_table.setColumnWidth(0, 50)
+        # Устанавливаем ширину столбца «Действия»
+        self.patients_table.setColumnWidth(6, 340)
+        # Устанавливаем режим растяжения для всех столбцов, кроме «Действия»
+        header = self.patients_table.horizontalHeader()
+        for col in range(7):
+            if col != 6:  # Пропускаем столбец «Действия»
+                header.setSectionResizeMode(col, QHeaderView.Stretch)
+            else:
+                header.setSectionResizeMode(col, QHeaderView.Fixed)  # Фиксируем ширину «Действия»
         self.patients_table.setSortingEnabled(True)
-        
+
         layout.addWidget(self.patients_table)
-        
+
         # Загрузка пациентов
         self.load_patients()
     
@@ -1169,52 +1353,62 @@ class PatientListWidget(QWidget):
         self.all_patients = patients  # Сохраняем для фильтрации
         
         self.update_table(patients)
-    
+
     def update_table(self, patients):
         """Обновление таблицы пациентов"""
         self.patients_table.setRowCount(len(patients))
-        
+
         for row, patient in enumerate(patients):
             # ID
             self.patients_table.setItem(row, 0, QTableWidgetItem(str(patient.get('id', ''))))
-            
+
             # ФИО
             self.patients_table.setItem(row, 1, QTableWidgetItem(patient.get('full_name', '')))
-            
+
             # Дата рождения
             self.patients_table.setItem(row, 2, QTableWidgetItem(patient.get('birth_date', '')))
-            
+
             # Пол (может отсутствовать в базе)
             gender = patient.get('gender', 'Не указан')
             self.patients_table.setItem(row, 3, QTableWidgetItem(gender))
-            
+
             # Телефон
             self.patients_table.setItem(row, 4, QTableWidgetItem(patient.get('phone', '')))
-            
+
             # Email
             self.patients_table.setItem(row, 5, QTableWidgetItem(patient.get('email', '')))
-            
+
             # Кнопки действий
             actions_widget = QWidget()
             actions_layout = QHBoxLayout(actions_widget)
             actions_layout.setContentsMargins(0, 0, 0, 0)
-            
+            actions_layout.setSpacing(5)
+
+            # Кнопки действий
             edit_button = QPushButton("Редактировать")
-            edit_button.setStyleSheet("min-width: 80px;")
+            edit_button.setObjectName("primary")
+            edit_button.setStyleSheet("min-width: 60px;")
             edit_button.clicked.connect(lambda checked, p=patient: self.edit_patient(p))
             actions_layout.addWidget(edit_button)
-            
+
             add_appointment_button = QPushButton("Запись")
-            add_appointment_button.setStyleSheet("min-width: 80px;")
+            add_appointment_button.setObjectName("success")
+            add_appointment_button.setStyleSheet("min-width: 60px;")
             add_appointment_button.clicked.connect(lambda checked, p=patient: self.add_appointment(p))
             actions_layout.addWidget(add_appointment_button)
-            
+
             delete_button = QPushButton("Удалить")
-            delete_button.setStyleSheet("min-width: 80px;")
+            delete_button.setObjectName("danger")
+            delete_button.setStyleSheet("min-width: 60px;")
             delete_button.clicked.connect(lambda checked, p=patient: self.delete_patient(p))
             actions_layout.addWidget(delete_button)
-            
+
             self.patients_table.setCellWidget(row, 6, actions_widget)
+
+            # Установка высоты строк
+            for row in range(self.patients_table.rowCount()):
+                self.patients_table.setRowHeight(row, 60)  # Устанавливаем высоту 60 пикселей
+
     
     def filter_patients(self):
         """Фильтрация пациентов по поисковому запросу"""
@@ -1404,10 +1598,12 @@ class AddPatientDialog(QDialog):
         buttons_layout = QHBoxLayout()
         
         save_button = QPushButton("Сохранить")
+        save_button.setObjectName("success")
         save_button.clicked.connect(self.save_patient)
         buttons_layout.addWidget(save_button)
         
         cancel_button = QPushButton("Отмена")
+        cancel_button.setObjectName("secondary")
         cancel_button.clicked.connect(self.reject)
         buttons_layout.addWidget(cancel_button)
         
@@ -1594,12 +1790,14 @@ class AnalysisResultsWidget(QWidget):
         self.date_to = QDateEdit()
         self.date_to.setDate(QDate.currentDate())
         self.date_to.setCalendarPopup(True)
-        
+
         # Кнопки управления фильтрами
         apply_filters_button = QPushButton("Применить")
+        apply_filters_button.setObjectName("primary")
         apply_filters_button.clicked.connect(self.refresh_analysis_results)
-        
+
         clear_filters_button = QPushButton("Сбросить")
+        clear_filters_button.setObjectName("secondary")
         clear_filters_button.clicked.connect(self.clear_filters)
         
         # Размещение элементов фильтра
@@ -1619,30 +1817,35 @@ class AnalysisResultsWidget(QWidget):
         
         # Таблица результатов анализов
         self.results_table = QTableWidget()
-        self.results_table.setColumnCount(7)
+        self.results_table.setColumnCount(6)
         self.results_table.setHorizontalHeaderLabels([
-            "Дата", "Пациент", "Тип анализа", "Статус", "Лаборант", "Документы", "Email"
+            "Дата", "Пациент", "Тип анализа", "Статус", "Лаборант", "Документы"
         ])
-        self.results_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        header = self.results_table.horizontalHeader()
+        for col in range(5):  # Столбцы с данными растягиваются
+            header.setSectionResizeMode(col, QHeaderView.Stretch)
+        header.setSectionResizeMode(5, QHeaderView.Fixed)  # Столбец действий фиксирован
+        self.results_table.setColumnWidth(5, 150)  # Уменьшена ширина для одной кнопки
         self.results_table.setSortingEnabled(True)
         
         layout.addWidget(self.results_table)
         
         # Кнопки действий
         actions_layout = QHBoxLayout()
-        
-        # Кнопка экспорта в Excel
+
+        # Кнопки действий
         export_excel_button = QPushButton("Экспорт в Excel")
+        export_excel_button.setObjectName("success")
         export_excel_button.clicked.connect(self.export_to_excel)
         actions_layout.addWidget(export_excel_button)
-        
-        # Кнопка экспорта всех результатов в Word
+
         export_all_word_button = QPushButton("Экспорт всех в Word")
+        export_all_word_button.setObjectName("info")
         export_all_word_button.clicked.connect(self.export_all_to_word)
         actions_layout.addWidget(export_all_word_button)
-        
-        # Кнопка отправки отчета по email
+
         send_report_button = QPushButton("Отправить отчет")
+        send_report_button.setObjectName("primary")
         send_report_button.clicked.connect(self.send_report_by_email)
         actions_layout.addWidget(send_report_button)
         
@@ -1733,21 +1936,20 @@ class AnalysisResultsWidget(QWidget):
             doc_widget = QWidget()
             doc_layout = QHBoxLayout(doc_widget)
             doc_layout.setContentsMargins(0, 0, 0, 0)
-            
+
+            # Кнопки для работы с документами
             view_button = QPushButton("Просмотр")
+            view_button.setObjectName("primary")
             view_button.setProperty("result_id", result_id)
             view_button.clicked.connect(self.view_analysis_result)
             
             doc_layout.addWidget(view_button)
             
             self.results_table.setCellWidget(row, 5, doc_widget)
-            
-            # Кнопка отправки по email
-            email_button = QPushButton("Отправить")
-            email_button.setProperty("result_id", result_id)
-            email_button.clicked.connect(self.send_by_email)
-            
-            self.results_table.setCellWidget(row, 6, email_button)
+
+            # Установка высоты строк
+            for row in range(self.results_table.rowCount()):
+                self.results_table.setRowHeight(row, 60)  # Устанавливаем высоту 60 пикселей
     
     def clear_filters(self):
         """Сброс фильтров"""
@@ -1867,16 +2069,19 @@ class AnalysisResultsWidget(QWidget):
             
             # Кнопка экспорта в Word
             word_button = QPushButton("Экспорт в Word")
+            word_button.setObjectName("info")
             word_button.clicked.connect(lambda: report_generator.export_analysis_to_word(result_id, dialog))
             buttons_layout.addWidget(word_button)
             
             # Кнопка отправки по email
             email_button = QPushButton("Отправить по Email")
+            email_button.setObjectName("success")
             email_button.clicked.connect(lambda: self.send_by_email(result_id=result_id, dialog=dialog))
             buttons_layout.addWidget(email_button)
             
             # Кнопка закрытия
             close_button = QPushButton("Закрыть")
+            close_button.setObjectName("secondary")
             close_button.clicked.connect(dialog.accept)
             buttons_layout.addWidget(close_button)
             
@@ -2023,7 +2228,10 @@ class AnalysisResultsWidget(QWidget):
             
             buttons_layout = QHBoxLayout()
             send_button = QPushButton("Отправить")
+            send_button.setObjectName("success")
+
             cancel_button = QPushButton("Отмена")
+            cancel_button.setObjectName("secondary")
             
             buttons_layout.addWidget(send_button)
             buttons_layout.addWidget(cancel_button)
@@ -2168,8 +2376,11 @@ class AnalysisResultsWidget(QWidget):
         buttons_layout = QHBoxLayout()
         
         send_button = QPushButton("Отправить")
+        send_button.setObjectName("success")
+
         cancel_button = QPushButton("Отмена")
-        
+        cancel_button.setObjectName("secondary")
+
         buttons_layout.addWidget(send_button)
         buttons_layout.addWidget(cancel_button)
         
@@ -2218,46 +2429,7 @@ class AnalysisResultsWidget(QWidget):
         
         except Exception as e:
             QMessageBox.critical(dialog, "Ошибка", f"Ошибка при отправке отчета: {str(e)}")
-    
-    def update_appointment(self, dialog, appointment_id, patient_id, doctor_id, appointment_date, appointment_time, status, notes):
-        """Обновление данных записи на прием"""
-        if not patient_id:
-            QMessageBox.warning(self, "Ошибка", "Необходимо выбрать пациента")
-            return
-        
-        if not doctor_id:
-            QMessageBox.warning(self, "Ошибка", "Необходимо выбрать врача")
-            return
-        
-        # Формируем полную дату со временем
-        datetime_str = f"{appointment_date} {appointment_time}"
-        
-        try:
-            # Обновляем запись в базе данных
-            success = db.execute_query(
-                """UPDATE appointments 
-                   SET doctor_id = ?, patient_id = ?, appointment_date = ?, status = ?, notes = ? 
-                   WHERE id = ?""",
-                (doctor_id, patient_id, datetime_str, status, notes, appointment_id)
-            )
-            
-            # Обновляем таблицу независимо от результата
-            self.refresh_appointments()
-            
-            if success is not None:
-                QMessageBox.information(self, "Успех", "Запись на прием успешно обновлена")
-                dialog.accept()
-            else:
-                QMessageBox.warning(self, "Примечание", "Возникла ошибка при обновлении записи, но данные могли быть сохранены")
-        
-        except Exception as e:
-            print(f"Ошибка при обновлении записи: {str(e)}")
-            # Обновляем таблицу в любом случае, т.к. данные могли быть обновлены
-            self.refresh_appointments()
-            for result in [db.execute_query]: pass  # Инициализация переменной успеха
-            # Возвращаем cursor.lastrowid внутри execute_query, так что если он не None, считаем успехом
-            QMessageBox.information(self, "Успех", "Запись на прием успешно обновлена (после исключения)")
-            dialog.accept()
+
     
     def export_to_excel(self, return_path=False):
         """
@@ -2354,7 +2526,7 @@ class AnalysisResultsWidget(QWidget):
 class AdminWindow(QMainWindow):
     """Главное окно интерфейса администратора"""
     logout_signal = Signal()
-    
+
     def __init__(self, user_data):
         super().__init__()
         self.user_data = user_data
@@ -2362,106 +2534,71 @@ class AdminWindow(QMainWindow):
         self.doctors = []
         self.appointments = []
         self.email_sender = EmailSender(test_mode=False)
+
+        # Установка заголовка и минимального размера окна
+        self.setWindowTitle(f"Медицинский центр - ДЦ А-Линия Чертаново")
+        self.setMinimumSize(800, 600)
+        self.setWindowIcon(QIcon("aliniya.png"))
+
+        # Применение глобального стиля
+        self.setStyleSheet(GLOBAL_STYLESHEET)
+
         self.setup_ui()
-    
+
     def setup_ui(self):
         """Настройка пользовательского интерфейса"""
         # Создание центрального виджета
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        
+
         # Основной layout
         main_layout = QVBoxLayout(central_widget)
-        
+
         # Верхняя панель с информацией о пользователе и кнопками
         top_panel = QHBoxLayout()
-        
-        user_info = QLabel(f"Администратор: {self.user_data['full_name']}")
-        user_info.setStyleSheet("font-weight: bold;")
-        self.setWindowIcon(QIcon("aliniya.png"))
+
+        user_info = QLabel(f"Администратор медцентра: {self.user_data['full_name']}")
+        user_info.setFont(QFont("Arial", 12, QFont.Bold))
         top_panel.addWidget(user_info)
-        
+
         top_panel.addStretch()
-        
+
         logout_button = QPushButton("Выйти")
-        logout_button.setStyleSheet("""
-            QPushButton {
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                padding: 5px 10px;
-                border-radius: 3px;
-            }
-            QPushButton:hover {
-                background-color: #c82333;
-            }
-        """)
+        logout_button.setObjectName("danger")
         logout_button.clicked.connect(self.logout)
         top_panel.addWidget(logout_button)
-        
+
         main_layout.addLayout(top_panel)
-        
+
         # Добавление разделительной линии
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
         separator.setFrameShadow(QFrame.Sunken)
         main_layout.addWidget(separator)
-        
+
         # Создание вкладок
         self.tab_widget = QTabWidget()
-        
+
         # Вкладка пользователей
         self.users_tab = UserListWidget()
         self.tab_widget.addTab(self.users_tab, "Пользователи")
-        # Установка стиля для вкладки "Пользователи"
-        self.tab_widget.setStyleSheet("""
-            QTabWidget::tab-bar {
-                alignment: left;
-            }
-
-            QTabBar::tab {
-                background: #f0f0f0;
-                color: #333;
-                padding: 8px 16px;
-                border: 1px solid #ccc;
-                border-bottom: none;
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-            }
-
-            QTabBar::tab:selected {
-                background: #007bff;
-                color: white;
-                border-color: #007bff;
-            }
-
-            QTabBar::tab:hover {
-                background: #e9ecef;
-            }
-
-            QTabWidget::pane {
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                background: white;
-            }
-        """)
 
         # Вкладка пациентов
-        self.patients_tab = PatientListWidget(parent=self)  # Передаем self как родителя
+        self.patients_tab = PatientListWidget(parent=self)
         self.tab_widget.addTab(self.patients_tab, "Пациенты")
-        
+
         # Вкладка анализов
         self.analysis_tab = AnalysisResultsWidget(parent=self)
         self.tab_widget.addTab(self.analysis_tab, "Анализы")
-        
+
         # Вкладка приемов
         self.appointments_tab = self.create_appointments_tab()
         self.tab_widget.addTab(self.appointments_tab, "Записи на прием")
-        
+
         # Вкладка статистики
         self.statistics_tab = SystemStatisticsWidget()
         self.tab_widget.addTab(self.statistics_tab, "Статистика")
-        
+
         main_layout.addWidget(self.tab_widget)
         
     def create_appointments_tab(self):
@@ -2532,25 +2669,17 @@ class AdminWindow(QMainWindow):
         
         # Кнопки управления фильтрами
         apply_button = QPushButton("Применить")
+        apply_button.setObjectName("primary")
         apply_button.clicked.connect(self.refresh_appointments)
 
 
         clear_button = QPushButton("Сбросить")
+        clear_button.setObjectName("primary")
         clear_button.clicked.connect(self.clear_appointment_filters)
         
         # Кнопка добавления новой записи
         add_appointment_button = QPushButton("Новая запись")
-        add_appointment_button.setStyleSheet("""
-            QPushButton {
-                background-color: #28a745;
-                color: white;
-                padding: 5px 10px;
-                border-radius: 3px;
-            }
-            QPushButton:hover {
-                background-color: #218838;
-            }
-        """)
+        add_appointment_button.setObjectName("success")
         add_appointment_button.clicked.connect(lambda: self.add_appointment_dialog())
         
         # Размещение элементов фильтра
@@ -2578,6 +2707,11 @@ class AdminWindow(QMainWindow):
             "Дата и время", "Пациент", "Врач", "Статус", "Примечания", "Действия", ""
         ])
         self.appointments_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.appointments_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # Устанавливаем фиксированную ширину для столбца "Действия"
+        self.appointments_table.setColumnWidth(5, 200)  # 200 пикселей для кнопок "Завершить" и "Отменить"
+        # Устанавливаем ширину для столбца с кнопками "Изменить" и "Удалить"
+        self.appointments_table.setColumnWidth(6, 200)  # 200 пикселей для кнопок редактирования
         self.appointments_table.setSortingEnabled(True)
         
         layout.addWidget(self.appointments_table)
@@ -2586,7 +2720,55 @@ class AdminWindow(QMainWindow):
         self.refresh_appointments()
         
         return appointments_tab
-    
+
+    def update_appointment(self, dialog, appointment_id, patient_id, doctor_id, appointment_date, appointment_time,
+                           status, notes):
+        """Обновление данных записи на прием"""
+        # Отладочный вывод
+        print(f"update_appointment: appointment_id={appointment_id}, patient_id={patient_id}, doctor_id={doctor_id}")
+        print(
+            f"appointment_date={appointment_date}, appointment_time={appointment_time}, status={status}, notes={notes}")
+
+        # Валидация
+        if not patient_id:
+            QMessageBox.warning(self, "Ошибка", "Необходимо выбрать пациента")
+            return
+
+        if not doctor_id:
+            QMessageBox.warning(self, "Ошибка", "Необходимо выбрать врача")
+            return
+
+        # Формируем полную дату со временем
+        datetime_str = f"{appointment_date} {appointment_time}"
+        print(f"Сформированная дата и время: {datetime_str}")
+
+        try:
+            # Обновляем запись в базе данных
+            query = """UPDATE appointments 
+                       SET doctor_id = ?, patient_id = ?, appointment_date = ?, status = ?, notes = ? 
+                       WHERE id = ?"""
+            params = (doctor_id, patient_id, datetime_str, status, notes, appointment_id)
+            print(f"SQL запрос: {query}")
+            print(f"Параметры: {params}")
+
+            success = db.execute_query(query, params)
+            print(f"Результат выполнения запроса: success={success}")
+
+            # Обновляем таблицу
+            self.refresh_appointments()
+
+            if success:
+                QMessageBox.information(self, "Успех", "Запись на прием успешно обновлена")
+                dialog.accept()
+            else:
+                QMessageBox.warning(self, "Ошибка", "Не удалось обновить запись на прием")
+
+        except Exception as e:
+            print(f"Ошибка при обновлении записи: {str(e)}")
+            QMessageBox.critical(self, "Ошибка", f"Произошла ошибка при обновлении записи: {str(e)}")
+            # Обновляем таблицу на случай, если изменения все же произошли
+            self.refresh_appointments()
+
     def refresh_appointments(self):
         """Обновление списка записей на прием с учетом фильтров"""
         # Получение параметров фильтрации
@@ -2672,14 +2854,18 @@ class AdminWindow(QMainWindow):
             # Кнопка изменения статуса
             if status != 'completed':
                 complete_button = QPushButton("Завершить")
+                complete_button.setObjectName("successS")
                 complete_button.setProperty("appointment_id", appointment.get('id'))
                 complete_button.clicked.connect(self.complete_appointment)
+                complete_button.setMinimumWidth(90)  # Минимальная ширина кнопки
                 actions_layout.addWidget(complete_button)
-            
+
             if status != 'cancelled':
                 cancel_button = QPushButton("Отменить")
+                cancel_button.setObjectName("dangerS")
                 cancel_button.setProperty("appointment_id", appointment.get('id'))
                 cancel_button.clicked.connect(self.cancel_appointment)
+                cancel_button.setMinimumWidth(90)  # Минимальная ширина кнопки
                 actions_layout.addWidget(cancel_button)
             
             self.appointments_table.setCellWidget(row, 5, actions_widget)
@@ -2688,18 +2874,20 @@ class AdminWindow(QMainWindow):
             edit_delete_widget = QWidget()
             edit_delete_layout = QHBoxLayout(edit_delete_widget)
             edit_delete_layout.setContentsMargins(0, 0, 0, 0)
-            
+
             edit_button = QPushButton("Изменить")
+            edit_button.setObjectName("primary")
             edit_button.setProperty("appointment_id", appointment.get('id'))
             edit_button.clicked.connect(self.edit_appointment)
+            edit_button.setMinimumWidth(90)  # Минимальная ширина кнопки
             edit_delete_layout.addWidget(edit_button)
-            
-            delete_button = QPushButton("Удалить")
-            delete_button.setProperty("appointment_id", appointment.get('id'))
-            delete_button.clicked.connect(self.delete_appointment)
-            edit_delete_layout.addWidget(delete_button)
+
             
             self.appointments_table.setCellWidget(row, 6, edit_delete_widget)
+
+            # Установка высоты строк
+            for row in range(self.appointments_table.rowCount()):
+                self.appointments_table.setRowHeight(row, 60)  # Устанавливаем высоту 60 пикселей
     
     def clear_appointment_filters(self):
         """Сброс фильтров записей на прием"""
@@ -2831,7 +3019,10 @@ class AdminWindow(QMainWindow):
         buttons_layout = QHBoxLayout()
         
         save_button = QPushButton("Сохранить")
+        save_button.setObjectName("success")
+
         cancel_button = QPushButton("Отмена")
+        cancel_button.setObjectName("secondary")
         
         buttons_layout.addWidget(save_button)
         buttons_layout.addWidget(cancel_button)
@@ -3007,18 +3198,21 @@ class AdminWindow(QMainWindow):
         form_layout.addRow("Примечания:", notes_edit)
         
         layout.addLayout(form_layout)
-        
+
         # Кнопки
         buttons_layout = QHBoxLayout()
-        
+
         save_button = QPushButton("Сохранить")
+        save_button.setObjectName("success")
+
         cancel_button = QPushButton("Отмена")
-        
+        cancel_button.setObjectName("secondary")
+
         buttons_layout.addWidget(save_button)
         buttons_layout.addWidget(cancel_button)
-        
+
         layout.addLayout(buttons_layout)
-        
+
         # Обработчики событий
         save_button.clicked.connect(lambda: self.update_appointment(
             dialog,
@@ -3031,7 +3225,16 @@ class AdminWindow(QMainWindow):
             notes_edit.text()
         ))
         cancel_button.clicked.connect(dialog.reject)
-        
+
+        # Добавляем отладочный вывод для проверки значений
+        print(f"edit_appointment: appointment_id={appointment_id}")
+        print(f"patient_combo.currentData()={patient_combo.currentData()}")
+        print(f"doctor_combo.currentData()={doctor_combo.currentData()}")
+        print(f"date_edit.date()={date_edit.date().toString('yyyy-MM-dd')}")
+        print(f"time_edit.time()={time_edit.time().toString('HH:mm')}")
+        print(f"status_combo.currentData()={status_combo.currentData()}")
+        print(f"notes_edit.text()={notes_edit.text()}")
+
         # Показываем диалог
         dialog.exec()
         

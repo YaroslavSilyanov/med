@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QWidget, QLabel, QLineEdit, QPushButton, 
+from PySide6.QtWidgets import (QWidget, QLabel, QLineEdit, QPushButton,
                                QVBoxLayout, QHBoxLayout, QMessageBox)
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QIcon
@@ -19,20 +19,21 @@ class LoginWindow(QWidget):
         self.setFixedSize(400, 300)
         self.setWindowIcon(QIcon("aliniya.png"))
         self.setup_ui()
-        
+
     def setup_ui(self):
         """Настройка пользовательского интерфейса"""
         # Основной layout
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(15)
-        
+
+
         # Заголовок
         title_label = QLabel("Авторизация в системе")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setFont(QFont("Arial", 16, QFont.Bold))
         main_layout.addWidget(title_label)
-        
+
         # Поле для ввода логина
         username_layout = QVBoxLayout()
         username_label = QLabel("Логин:")
@@ -41,7 +42,7 @@ class LoginWindow(QWidget):
         username_layout.addWidget(username_label)
         username_layout.addWidget(self.username_input)
         main_layout.addLayout(username_layout)
-        
+
         # Поле для ввода пароля
         password_layout = QVBoxLayout()
         password_label = QLabel("Пароль:")
@@ -51,7 +52,7 @@ class LoginWindow(QWidget):
         password_layout.addWidget(password_label)
         password_layout.addWidget(self.password_input)
         main_layout.addLayout(password_layout)
-        
+
         # Кнопка входа
         login_button = QPushButton("Войти")
         login_button.setStyleSheet("""
@@ -69,19 +70,19 @@ class LoginWindow(QWidget):
         """)
         login_button.clicked.connect(self.authenticate)
         main_layout.addWidget(login_button)
-        
+
         # Настройка нажатия Enter для входа
         self.username_input.returnPressed.connect(login_button.click)
         self.password_input.returnPressed.connect(login_button.click)
-        
+
         # Информация о системе
         info_label = QLabel("Медицинский центр - Система документооборота")
         info_label.setAlignment(Qt.AlignCenter)
         info_label.setStyleSheet("color: gray;")
         main_layout.addWidget(info_label)
-        
+
         self.setLayout(main_layout)
-        
+
         # Установка фокуса на поле ввода логина
         self.username_input.setFocus()
         

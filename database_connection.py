@@ -1,58 +1,62 @@
 import json
 import os
 import sqlite3
-import hashlib
 from datetime import datetime
+
 
 class DatabaseConnection:
     """Класс для работы с базой данных SQLite"""
     _instance = None
     _db_password = "1"  # Пароль для доступа к базе данных
-    
+
     def __new__(cls):
         """Реализация паттерна Singleton для подключения к БД"""
         if cls._instance is None:
             cls._instance = super(DatabaseConnection, cls).__new__(cls)
             cls._instance._connection = None
         return cls._instance
-    
+
     def __init__(self):
         """Инициализация подключения к БД"""
         self.db_path = 'med_center.db'
         self.authorized = False
-        
+
         # Статус подключения
         self.connected = False
-    
+
     def verify_password(self, password):
         """Проверка пароля для доступа к базе данных"""
         return password == self._db_password
-    
+
     def connect(self, password=None):
         """Установка соединения с базой данных"""
+        # Если пароль не передан, используем пароль по умолчанию
+        if password is None:
+            password = self._db_password
+
         # Проверка пароля при первом подключении
-        if not self.authorized and password is not None:
+        if not self.authorized:
             if not self.verify_password(password):
                 print("Неверный пароль для доступа к базе данных")
                 return False
             self.authorized = True
-        
+
         # Если уже авторизованы или пароль верный
         if self.authorized:
             try:
                 # Проверка существования файла базы данных
                 db_exists = os.path.exists(self.db_path)
                 print(f"Файл базы данных {'существует' if db_exists else 'не существует'}")
-                
+
                 if self._connection is None:
                     self._connection = sqlite3.connect(self.db_path)
                     self._connection.row_factory = self._dict_factory
                     self.connected = True
                     print("Подключение к базе данных установлено")
-                    
+
                     # Создаем таблицы если они не существуют
                     self._initialize_database()
-                    
+
                     # Если файл базы данных не существовал, то создаем тестовые данные
                     if not db_exists:
                         print("Создание тестовых данных...")
@@ -65,19 +69,19 @@ class DatabaseConnection:
         else:
             print("Необходима авторизация для доступа к базе данных")
             return False
-    
+
     def _dict_factory(self, cursor, row):
         """Конвертирует строку результата в словарь"""
         d = {}
         for idx, col in enumerate(cursor.description):
             d[col[0]] = row[idx]
         return d
-    
+
     def _initialize_database(self):
         """Инициализация базы данных (создание таблиц)"""
         try:
             cursor = self._connection.cursor()
-            
+
             # Таблица пользователей
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -92,7 +96,16 @@ class DatabaseConnection:
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
             ''')
-            
+            # Добавление таблицы лекарств
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS medications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                description TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+            ''')
+
             # Таблица пациентов
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS patients (
@@ -107,7 +120,7 @@ class DatabaseConnection:
                 updated_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
             ''')
-            
+
             # Таблица типов анализов
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS analysis_types (
@@ -117,7 +130,7 @@ class DatabaseConnection:
                 parameters TEXT
             )
             ''')
-            
+
             # Таблица результатов анализов
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS analysis_results (
@@ -133,7 +146,7 @@ class DatabaseConnection:
                 FOREIGN KEY (lab_user_id) REFERENCES users(id)
             )
             ''')
-            
+
             # Таблица врачей
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS doctors (
@@ -143,7 +156,7 @@ class DatabaseConnection:
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
             ''')
-            
+
             # Таблица расписания приемов
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS appointments (
@@ -158,23 +171,48 @@ class DatabaseConnection:
                 FOREIGN KEY (patient_id) REFERENCES patients(id)
             )
             ''')
-            
+            # Таблица рецептов
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS prescriptions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                doctor_id INTEGER NOT NULL,
+                patient_id INTEGER NOT NULL,
+                issue_date TEXT NOT NULL,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (doctor_id) REFERENCES doctors(id),
+                FOREIGN KEY (patient_id) REFERENCES patients(id)
+            )
+            ''')
+
+            # Таблица для связи рецептов и лекарств
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS prescription_medications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                prescription_id INTEGER NOT NULL,
+                medication_id INTEGER NOT NULL,
+                dosage TEXT NOT NULL,
+                instructions TEXT,
+                FOREIGN KEY (prescription_id) REFERENCES prescriptions(id),
+                FOREIGN KEY (medication_id) REFERENCES medications(id)
+            )
+            ''')
+
             # Создаем тестовые данные, если таблицы были пустыми
             self._create_test_data()
-            
+
             self._connection.commit()
-            
+
         except sqlite3.Error as e:
             print(f"Ошибка при инициализации базы данных: {e}")
             self._connection.rollback()
-    
+
     def _create_test_data(self, force=False):
         """Создание тестовых данных, если они не существуют"""
         # Проверяем, есть ли пользователи
         cur = self._connection.cursor()
         cur.execute("SELECT COUNT(*) as count FROM users")
         result = cur.fetchone()
-        
+
         if result and result['count'] == 0 or force:
             # Создаем пользователей
             user_data = [
@@ -183,52 +221,73 @@ class DatabaseConnection:
                 ('lab1', 'lab123', 'Иванова Мария Петровна', 'lab', 'lab1@medcenter.com'),
                 ('lab2', '1', 'Смирнова Елена Алексеевна', 'lab', 'lab2@medcenter.com')
             ]
-            
+
             cur.executemany(
                 "INSERT INTO users (username, password, full_name, role, email) VALUES (?, ?, ?, ?, ?)",
                 user_data
             )
-            
+
+            # Создаем тестовые лекарства
+            medication_data = [
+                ('Парацетамол', 'Обезболивающее и жаропонижающее средство'),
+                ('Ибупрофен', 'Противовоспалительное средство'),
+                ('Амоксициллин', 'Антибиотик'),
+                ('Лоратадин', 'Антигистаминное средство'),
+                ('Омепразол', 'Ингибитор протонной помпы')
+            ]
+            cur.executemany(
+                "INSERT INTO medications (name, description) VALUES (?, ?)",
+                medication_data
+            )
+
             # Создаем пациентов
             patient_data = [
-                ('Иванов Иван Иванович', '1978-05-15', '+7 (900) 123-45-67', 'ivanov@example.com', 'г. Москва, ул. Ленина, 10-15'),
-                ('Петрова Анна Сергеевна', '1990-10-20', '+7 (900) 987-65-43', 'petrova@example.com', 'г. Москва, пр. Мира, 25-42'),
-                ('Сидоров Петр Николаевич', '1965-03-07', '+7 (900) 111-22-33', 'sidorov@example.com', 'г. Москва, ул. Гагарина, 5-10'),
-                ('Кузнецова Елена Владимировна', '1995-12-18', '+7 (900) 444-55-66', 'kuznetsova@example.com', 'г. Москва, ул. Пушкина, 15-7'),
-                ('Смирнов Алексей Петрович', '1958-07-30', '+7 (900) 777-88-99', 'smirnov@example.com', 'г. Москва, ул. Лермонтова, 20-30')
+                ('Иванов Иван Иванович', '1978-05-15', '+7 (900) 123-45-67', 'ivanov@example.com',
+                 'г. Москва, ул. Ленина, 10-15'),
+                ('Петрова Анна Сергеевна', '1990-10-20', '+7 (900) 987-65-43', 'petrova@example.com',
+                 'г. Москва, пр. Мира, 25-42'),
+                ('Сидоров Петр Николаевич', '1965-03-07', '+7 (900) 111-22-33', 'sidorov@example.com',
+                 'г. Москва, ул. Гагарина, 5-10'),
+                ('Кузнецова Елена Владимировна', '1995-12-18', '+7 (900) 444-55-66', 'kuznetsova@example.com',
+                 'г. Москва, ул. Пушкина, 15-7'),
+                ('Смирнов Алексей Петрович', '1958-07-30', '+7 (900) 777-88-99', 'smirnov@example.com',
+                 'г. Москва, ул. Лермонтова, 20-30')
             ]
-            
+
             cur.executemany(
                 "INSERT INTO patients (full_name, birth_date, phone, email, address) VALUES (?, ?, ?, ?, ?)",
                 patient_data
             )
-            
+
             # Создаем типы анализов
             analysis_types_data = [
-                ('Общий анализ крови', 'Базовый анализ состава крови', 'Гемоглобин,Эритроциты,Лейкоциты,Тромбоциты,СОЭ'),
-                ('Биохимический анализ крови', 'Анализ биохимических показателей крови', 'Глюкоза,Холестерин,Билирубин,АЛТ,АСТ,Креатинин,Мочевина'),
-                ('Общий анализ мочи', 'Базовый анализ состава мочи', 'Цвет,Прозрачность,pH,Белок,Глюкоза,Кетоновые тела,Лейкоциты,Эритроциты')
+                (
+                'Общий анализ крови', 'Базовый анализ состава крови', 'Гемоглобин,Эритроциты,Лейкоциты,Тромбоциты,СОЭ'),
+                ('Биохимический анализ крови', 'Анализ биохимических показателей крови',
+                 'Глюкоза,Холестерин,Билирубин,АЛТ,АСТ,Креатинин,Мочевина'),
+                ('Общий анализ мочи', 'Базовый анализ состава мочи',
+                 'Цвет,Прозрачность,pH,Белок,Глюкоза,Кетоновые тела,Лейкоциты,Эритроциты')
             ]
-            
+
             cur.executemany(
                 "INSERT INTO analysis_types (name, description, parameters) VALUES (?, ?, ?)",
                 analysis_types_data
             )
-            
-            # Создаем запись врача для doctor1
+
+            # Создаем запись врачей для doctor1
             cur.execute("SELECT id FROM users WHERE username = 'doctor1'")
             doctor_user = cur.fetchone()
-            
+
             if doctor_user:
                 cur.execute(
                     "INSERT INTO doctors (user_id, specialization) VALUES (?, ?)",
                     (doctor_user['id'], 'Терапевт')
                 )
-                
+
                 # Получаем ID врача
                 cur.execute("SELECT id FROM doctors ORDER BY id DESC LIMIT 1")
                 doctor = cur.fetchone()
-                
+
                 if doctor:
                     # Создаем записи на прием
                     appointments_data = [
@@ -238,99 +297,121 @@ class DatabaseConnection:
                         (doctor['id'], 4, '2023-10-16 10:30:00', 'scheduled', 'Профилактический осмотр'),
                         (doctor['id'], 5, '2023-10-17 14:00:00', 'scheduled', 'Контроль лечения')
                     ]
-                    
+
                     cur.executemany(
                         "INSERT INTO appointments (doctor_id, patient_id, appointment_date, status, notes) VALUES (?, ?, ?, ?, ?)",
                         appointments_data
                     )
-            
+
             # Создаем тестовые результаты анализов для лаборанта lab1
             # Получаем ID лаборанта
             cur.execute("SELECT id FROM users WHERE username = 'lab1'")
             lab_user = cur.fetchone()
-            
+
             if lab_user:
                 # Получаем ID типов анализов
                 cur.execute("SELECT id FROM analysis_types WHERE name = 'Общий анализ крови'")
                 blood_analysis = cur.fetchone()
-                
+
                 cur.execute("SELECT id FROM analysis_types WHERE name = 'Биохимический анализ крови'")
                 biochem_analysis = cur.fetchone()
-                
+
                 cur.execute("SELECT id FROM analysis_types WHERE name = 'Общий анализ мочи'")
                 urine_analysis = cur.fetchone()
-                
+
                 # Создаем данные результатов анализов
                 if blood_analysis and biochem_analysis and urine_analysis:
                     # Тестовые данные анализов для разных пациентов
                     analysis_results_data = [
                         # Общий анализ крови для пациента 1
-                        (1, blood_analysis['id'], lab_user['id'], '2023-10-10 09:30:00', '{"Гемоглобин":"140 г/л","Эритроциты":"4.5 млн/мкл","Лейкоциты":"6.8 тыс/мкл","Тромбоциты":"250 тыс/мкл","СОЭ":"10 мм/ч"}', 'completed'),
+                        (1, blood_analysis['id'], lab_user['id'], '2023-10-10 09:30:00',
+                         '{"Гемоглобин":"140 г/л","Эритроциты":"4.5 млн/мкл","Лейкоциты":"6.8 тыс/мкл","Тромбоциты":"250 тыс/мкл","СОЭ":"10 мм/ч"}',
+                         'completed'),
                         # Биохимический анализ крови для пациента 1
-                        (1, biochem_analysis['id'], lab_user['id'], '2023-10-10 10:00:00', '{"Глюкоза":"5.2 ммоль/л","Холестерин":"4.8 ммоль/л","Билирубин":"12 мкмоль/л","АЛТ":"25 Ед/л","АСТ":"22 Ед/л","Креатинин":"80 мкмоль/л","Мочевина":"5.5 ммоль/л"}', 'completed'),
+                        (1, biochem_analysis['id'], lab_user['id'], '2023-10-10 10:00:00',
+                         '{"Глюкоза":"5.2 ммоль/л","Холестерин":"4.8 ммоль/л","Билирубин":"12 мкмоль/л","АЛТ":"25 Ед/л","АСТ":"22 Ед/л","Креатинин":"80 мкмоль/л","Мочевина":"5.5 ммоль/л"}',
+                         'completed'),
                         # Общий анализ мочи для пациента 1
-                        (1, urine_analysis['id'], lab_user['id'], '2023-10-10 10:30:00', '{"Цвет":"Желтый","Прозрачность":"Прозрачная","pH":"6.0","Белок":"Отрицательно","Глюкоза":"Отрицательно","Кетоновые тела":"Отрицательно","Лейкоциты":"0-1 в п/зр","Эритроциты":"0-1 в п/зр"}', 'completed'),
-                        
+                        (1, urine_analysis['id'], lab_user['id'], '2023-10-10 10:30:00',
+                         '{"Цвет":"Желтый","Прозрачность":"Прозрачная","pH":"6.0","Белок":"Отрицательно","Глюкоза":"Отрицательно","Кетоновые тела":"Отрицательно","Лейкоциты":"0-1 в п/зр","Эритроциты":"0-1 в п/зр"}',
+                         'completed'),
+
                         # Общий анализ крови для пациента 2
-                        (2, blood_analysis['id'], lab_user['id'], '2023-10-11 09:00:00', '{"Гемоглобин":"135 г/л","Эритроциты":"4.2 млн/мкл","Лейкоциты":"7.5 тыс/мкл","Тромбоциты":"220 тыс/мкл","СОЭ":"15 мм/ч"}', 'completed'),
-                        
+                        (2, blood_analysis['id'], lab_user['id'], '2023-10-11 09:00:00',
+                         '{"Гемоглобин":"135 г/л","Эритроциты":"4.2 млн/мкл","Лейкоциты":"7.5 тыс/мкл","Тромбоциты":"220 тыс/мкл","СОЭ":"15 мм/ч"}',
+                         'completed'),
+
                         # Общий анализ крови для пациента 3
-                        (3, blood_analysis['id'], lab_user['id'], '2023-10-12 11:00:00', '{"Гемоглобин":"150 г/л","Эритроциты":"4.7 млн/мкл","Лейкоциты":"5.9 тыс/мкл","Тромбоциты":"280 тыс/мкл","СОЭ":"8 мм/ч"}', 'completed'),
-                        
+                        (3, blood_analysis['id'], lab_user['id'], '2023-10-12 11:00:00',
+                         '{"Гемоглобин":"150 г/л","Эритроциты":"4.7 млн/мкл","Лейкоциты":"5.9 тыс/мкл","Тромбоциты":"280 тыс/мкл","СОЭ":"8 мм/ч"}',
+                         'completed'),
+
                         # Биохимический анализ крови для пациента 4
-                        (4, biochem_analysis['id'], lab_user['id'], '2023-10-13 10:15:00', '{"Глюкоза":"5.5 ммоль/л","Холестерин":"5.2 ммоль/л","Билирубин":"14 мкмоль/л","АЛТ":"28 Ед/л","АСТ":"25 Ед/л","Креатинин":"85 мкмоль/л","Мочевина":"5.8 ммоль/л"}', 'completed'),
-                        
+                        (4, biochem_analysis['id'], lab_user['id'], '2023-10-13 10:15:00',
+                         '{"Глюкоза":"5.5 ммоль/л","Холестерин":"5.2 ммоль/л","Билирубин":"14 мкмоль/л","АЛТ":"28 Ед/л","АСТ":"25 Ед/л","Креатинин":"85 мкмоль/л","Мочевина":"5.8 ммоль/л"}',
+                         'completed'),
+
                         # Общий анализ мочи для пациента 5
-                        (5, urine_analysis['id'], lab_user['id'], '2023-10-14 09:45:00', '{"Цвет":"Соломенно-желтый","Прозрачность":"Прозрачная","pH":"5.8","Белок":"Отрицательно","Глюкоза":"Отрицательно","Кетоновые тела":"Отрицательно","Лейкоциты":"0-2 в п/зр","Эритроциты":"0 в п/зр"}', 'completed')
+                        (5, urine_analysis['id'], lab_user['id'], '2023-10-14 09:45:00',
+                         '{"Цвет":"Соломенно-желтый","Прозрачность":"Прозрачная","pH":"5.8","Белок":"Отрицательно","Глюкоза":"Отрицательно","Кетоновые тела":"Отрицательно","Лейкоциты":"0-2 в п/зр","Эритроциты":"0 в п/зр"}',
+                         'completed')
                     ]
-                    
+
                     cur.executemany(
                         "INSERT INTO analysis_results (patient_id, analysis_type_id, lab_user_id, result_date, result_data, status) VALUES (?, ?, ?, ?, ?, ?)",
                         analysis_results_data
                     )
-            
+
             # Создаем тестовые результаты анализов для лаборанта lab2
             cur.execute("SELECT id FROM users WHERE username = 'lab2'")
             lab_user2 = cur.fetchone()
-            
+
             if lab_user2:
                 # Получаем ID типов анализов (повторно использовать уже полученные переменные)
                 if not blood_analysis:
                     cur.execute("SELECT id FROM analysis_types WHERE name = 'Общий анализ крови'")
                     blood_analysis = cur.fetchone()
-                
+
                 if not biochem_analysis:
                     cur.execute("SELECT id FROM analysis_types WHERE name = 'Биохимический анализ крови'")
                     biochem_analysis = cur.fetchone()
-                
+
                 if not urine_analysis:
                     cur.execute("SELECT id FROM analysis_types WHERE name = 'Общий анализ мочи'")
                     urine_analysis = cur.fetchone()
-                
+
                 # Создаем данные результатов анализов для лаборанта lab2
                 if blood_analysis and biochem_analysis and urine_analysis:
                     # Тестовые данные анализов для разных пациентов
                     lab2_analysis_results_data = [
                         # Общий анализ крови для пациента 3
-                        (3, blood_analysis['id'], lab_user2['id'], '2023-10-15 09:30:00', '{"Гемоглобин":"145 г/л","Эритроциты":"4.6 млн/мкл","Лейкоциты":"6.5 тыс/мкл","Тромбоциты":"260 тыс/мкл","СОЭ":"9 мм/ч"}', 'completed'),
-                        
+                        (3, blood_analysis['id'], lab_user2['id'], '2023-10-15 09:30:00',
+                         '{"Гемоглобин":"145 г/л","Эритроциты":"4.6 млн/мкл","Лейкоциты":"6.5 тыс/мкл","Тромбоциты":"260 тыс/мкл","СОЭ":"9 мм/ч"}',
+                         'completed'),
+
                         # Биохимический анализ крови для пациента 2
-                        (2, biochem_analysis['id'], lab_user2['id'], '2023-10-15 10:45:00', '{"Глюкоза":"5.1 ммоль/л","Холестерин":"4.9 ммоль/л","Билирубин":"11 мкмоль/л","АЛТ":"24 Ед/л","АСТ":"21 Ед/л","Креатинин":"79 мкмоль/л","Мочевина":"5.3 ммоль/л"}', 'completed'),
-                        
+                        (2, biochem_analysis['id'], lab_user2['id'], '2023-10-15 10:45:00',
+                         '{"Глюкоза":"5.1 ммоль/л","Холестерин":"4.9 ммоль/л","Билирубин":"11 мкмоль/л","АЛТ":"24 Ед/л","АСТ":"21 Ед/л","Креатинин":"79 мкмоль/л","Мочевина":"5.3 ммоль/л"}',
+                         'completed'),
+
                         # Общий анализ мочи для пациента 4
-                        (4, urine_analysis['id'], lab_user2['id'], '2023-10-16 11:30:00', '{"Цвет":"Светло-желтый","Прозрачность":"Прозрачная","pH":"6.2","Белок":"Отрицательно","Глюкоза":"Отрицательно","Кетоновые тела":"Отрицательно","Лейкоциты":"0-1 в п/зр","Эритроциты":"0 в п/зр"}', 'completed'),
-                        
+                        (4, urine_analysis['id'], lab_user2['id'], '2023-10-16 11:30:00',
+                         '{"Цвет":"Светло-желтый","Прозрачность":"Прозрачная","pH":"6.2","Белок":"Отрицательно","Глюкоза":"Отрицательно","Кетоновые тела":"Отрицательно","Лейкоциты":"0-1 в п/зр","Эритроциты":"0 в п/зр"}',
+                         'completed'),
+
                         # Общий анализ крови для пациента 5
-                        (5, blood_analysis['id'], lab_user2['id'], '2023-10-17 09:15:00', '{"Гемоглобин":"142 г/л","Эритроциты":"4.4 млн/мкл","Лейкоциты":"7.0 тыс/мкл","Тромбоциты":"245 тыс/мкл","СОЭ":"12 мм/ч"}', 'completed')
+                        (5, blood_analysis['id'], lab_user2['id'], '2023-10-17 09:15:00',
+                         '{"Гемоглобин":"142 г/л","Эритроциты":"4.4 млн/мкл","Лейкоциты":"7.0 тыс/мкл","Тромбоциты":"245 тыс/мкл","СОЭ":"12 мм/ч"}',
+                         'completed')
                     ]
-                    
+
                     cur.executemany(
                         "INSERT INTO analysis_results (patient_id, analysis_type_id, lab_user_id, result_date, result_data, status) VALUES (?, ?, ?, ?, ?, ?)",
                         lab2_analysis_results_data
                     )
-            
+
             self._connection.commit()
-    
+
     def disconnect(self):
         """Закрытие соединения с базой данных"""
         if self._connection:
@@ -338,12 +419,12 @@ class DatabaseConnection:
             self._connection = None
             self.connected = False
             print("Соединение с базой данных закрыто")
-    
+
     def execute_query(self, query, params=None):
         """Выполнение SQL-запроса"""
         if not self.connect():
             return None
-            
+
         try:
             cursor = self._connection.cursor()
             print(f"Выполнение запроса: {query}")
@@ -362,12 +443,48 @@ class DatabaseConnection:
             print(f"Запрос: {query}")
             print(f"Параметры: {params}")
             return None
-    
+
+    def get_all_medications(self):
+        """Получение всех лекарств"""
+        query = "SELECT * FROM medications"
+        return self.fetch_all(query)
+
+    def add_medication(self, name, description=None):
+        """Добавление нового лекарства"""
+        query = "INSERT INTO medications (name, description) VALUES (?, ?)"
+        return self.execute_query(query, (name, description))
+
+    def add_prescription(self, doctor_id, patient_id, issue_date):
+        """Добавление нового рецепта"""
+        query = """
+        INSERT INTO prescriptions (doctor_id, patient_id, issue_date)
+        VALUES (?, ?, ?)
+        """
+        return self.execute_query(query, (doctor_id, patient_id, issue_date))
+
+    def add_prescription_medication(self, prescription_id, medication_id, dosage, instructions=None):
+        """Добавление лекарства к рецепту"""
+        query = """
+        INSERT INTO prescription_medications (prescription_id, medication_id, dosage, instructions)
+        VALUES (?, ?, ?, ?)
+        """
+        return self.execute_query(query, (prescription_id, medication_id, dosage, instructions))
+
+    def get_prescription_medications(self, prescription_id):
+        """Получение всех лекарств для рецепта"""
+        query = """
+        SELECT pm.*, m.name as medication_name
+        FROM prescription_medications pm
+        JOIN medications m ON pm.medication_id = m.id
+        WHERE pm.prescription_id = ?
+        """
+        return self.fetch_all(query, (prescription_id,))
+
     def fetch_one(self, query, params=None):
         """Получение одной записи из базы данных"""
         if not self.connect():
             return None
-            
+
         try:
             cursor = self._connection.cursor()
             cursor.execute(query, params or ())
@@ -375,12 +492,12 @@ class DatabaseConnection:
         except sqlite3.Error as e:
             print(f"Ошибка выполнения запроса: {e}")
             return None
-    
+
     def fetch_all(self, query, params=None):
         """Получение всех записей из базы данных"""
         if not self.connect():
             return []
-            
+
         try:
             cursor = self._connection.cursor()
             cursor.execute(query, params or ())
@@ -395,15 +512,15 @@ class DatabaseConnection:
         print(f"Попытка аутентификации пользователя: {username}")
         query = "SELECT * FROM users WHERE username = ? AND password = ? AND status = 'active'"
         print(f"Выполнение запроса: {query} с параметрами: {username}, {password}")
-        
+
         # Сначала проверим, есть ли такой пользователь вообще
         check_user = self.fetch_one("SELECT * FROM users WHERE username = ?", (username,))
         if not check_user:
             print(f"Пользователь с логином {username} не найден в базе данных")
             return None
-        
+
         user = self.fetch_one(query, (username, password))
-        
+
         if user:
             print(f"Пользователь {username} успешно аутентифицирован")
             # Обновление времени последнего входа
@@ -414,12 +531,12 @@ class DatabaseConnection:
         else:
             print(f"Неверный пароль для пользователя {username}")
             return None
-    
+
     def get_all_users(self):
         """Получение всех пользователей"""
         query = "SELECT * FROM users"
         return self.fetch_all(query)
-    
+
     def add_user(self, username, password, full_name, role, email=None):
         """Добавление нового пользователя"""
         query = """
@@ -427,18 +544,18 @@ class DatabaseConnection:
         VALUES (?, ?, ?, ?, ?)
         """
         return self.execute_query(query, (username, password, full_name, role, email))
-    
+
     # Методы для работы с пациентами
     def get_all_patients(self):
         """Получение всех пациентов"""
         query = "SELECT * FROM patients"
         return self.fetch_all(query)
-    
+
     def get_patient(self, patient_id):
         """Получение данных о конкретном пациенте"""
         query = "SELECT * FROM patients WHERE id = ?"
         return self.fetch_one(query, (patient_id,))
-    
+
     def add_patient(self, full_name, birth_date, gender=None, phone=None, email=None, address=None):
         """Добавление нового пациента"""
         query = """
@@ -446,7 +563,7 @@ class DatabaseConnection:
         VALUES (?, ?, ?, ?, ?, ?)
         """
         return self.execute_query(query, (full_name, birth_date, gender, phone, email, address))
-    
+
     def update_patient(self, patient_id, full_name, birth_date, gender=None, phone=None, email=None, address=None):
         """Обновление данных пациента"""
         query = """
@@ -455,42 +572,42 @@ class DatabaseConnection:
         WHERE id = ?
         """
         return self.execute_query(query, (full_name, birth_date, gender, phone, email, address, patient_id))
-    
+
     def delete_patient(self, patient_id):
         """Удаление пациента"""
         query = "DELETE FROM patients WHERE id = ?"
         return self.execute_query(query, (patient_id,))
-    
+
     # Методы для работы с анализами
     def get_all_analysis_types(self):
         """Получение всех типов анализов"""
         query = "SELECT * FROM analysis_types"
         return self.fetch_all(query)
-    
+
     def get_analysis_type(self, analysis_id):
         """Получение информации о конкретном типе анализа"""
         query = "SELECT * FROM analysis_types WHERE id = ?"
         return self.fetch_one(query, (analysis_id,))
-    
+
     def get_analysis_parameters(self, analysis_id):
         """Получение параметров анализа"""
         analysis = self.get_analysis_type(analysis_id)
         if analysis and analysis['parameters']:
             return analysis['parameters'].split(',')
         return []
-    
+
     def add_analysis_result(self, patient_id, analysis_type_id, lab_user_id, result_data):
         """Добавление результата анализа"""
         # Сериализация результатов в строку
         if isinstance(result_data, dict):
             result_data = json.dumps(result_data)
-            
+
         query = """
         INSERT INTO analysis_results (patient_id, analysis_type_id, lab_user_id, result_data, status) 
         VALUES (?, ?, ?, ?, 'completed')
         """
         return self.execute_query(query, (patient_id, analysis_type_id, lab_user_id, result_data))
-    
+
     def get_patient_analysis_results(self, patient_id):
         """Получение всех результатов анализов пациента"""
         query = """
@@ -503,7 +620,7 @@ class DatabaseConnection:
         ORDER BY ar.result_date DESC
         """
         return self.fetch_all(query, (patient_id,))
-    
+
     def get_all_analysis_results(self):
         """Получение всех результатов анализов"""
         query = """
@@ -515,7 +632,7 @@ class DatabaseConnection:
         ORDER BY ar.result_date DESC
         """
         return self.fetch_all(query)
-    
+
     # Методы для работы с расписанием
     def get_doctor_schedule(self, doctor_id):
         """Получение расписания врача"""
@@ -527,7 +644,7 @@ class DatabaseConnection:
         ORDER BY a.appointment_date
         """
         return self.fetch_all(query, (doctor_id,))
-    
+
     def get_all_appointments(self):
         """Получение всех записей на прием"""
         query = """
@@ -541,7 +658,7 @@ class DatabaseConnection:
         ORDER BY a.appointment_date
         """
         return self.fetch_all(query)
-    
+
     def add_appointment(self, doctor_id, patient_id, appointment_date, notes=None):
         """Добавление записи на прием"""
         query = """
@@ -549,12 +666,12 @@ class DatabaseConnection:
         VALUES (?, ?, ?, ?)
         """
         return self.execute_query(query, (doctor_id, patient_id, appointment_date, notes))
-    
+
     def update_appointment_status(self, appointment_id, status):
         """Обновление статуса записи на прием"""
         query = "UPDATE appointments SET status = ? WHERE id = ?"
         return self.execute_query(query, (status, appointment_id))
-    
+
     def get_doctor_by_user_id(self, user_id):
         """Получение информации о враче по ID пользователя"""
         print(f"Получение информации о враче для пользователя с ID: {user_id}")
@@ -562,10 +679,10 @@ class DatabaseConnection:
         result = self.fetch_one(query, (user_id,))
         print(f"Результат запроса информации о враче: {result}")
         return result
-    
+
     def get_patients_without_analysis(self, analysis_type_id=None):
         """Получение списка пациентов, у которых нет анализов определенного типа
-        
+
         Если analysis_type_id не указан, возвращает пациентов, у которых нет анализов вообще.
         """
         if analysis_type_id:
@@ -591,7 +708,7 @@ class DatabaseConnection:
     def get_analysis_result_details(self, result_id):
         """
         Получение детальной информации о результате анализа
-        
+
         :param result_id: ID результата анализа
         :return: Словарь с детальной информацией о результате или None, если результат не найден
         """
@@ -611,10 +728,10 @@ class DatabaseConnection:
             WHERE ar.id = ?
             """
             result = self.fetch_one(query, (result_id,))
-            
+
             if not result:
                 return None
-            
+
             # Формируем структуру данных для ответа
             result_details = {
                 'id': result['id'],
@@ -633,19 +750,20 @@ class DatabaseConnection:
                 },
                 'lab_technician': result['lab_technician_name']
             }
-            
+
             # Получаем и парсим данные результатов
             result_data = result['result_data']
             parameters = []
-            
+
             try:
                 # Пробуем разобрать JSON
                 import json
                 result_data_dict = json.loads(result_data)
-                
+
                 # Получаем список параметров анализа
-                analysis_parameters = result['analysis_type_parameters'].split(',') if result['analysis_type_parameters'] else []
-                
+                analysis_parameters = result['analysis_type_parameters'].split(',') if result[
+                    'analysis_type_parameters'] else []
+
                 # Нормальные значения для известных параметров
                 normal_values = {
                     'Гемоглобин': {'min': 120, 'max': 160, 'unit': 'г/л'},
@@ -662,18 +780,19 @@ class DatabaseConnection:
                     'Мочевина': {'min': 2.5, 'max': 8.3, 'unit': 'ммоль/л'},
                     'pH': {'min': 5.0, 'max': 7.0, 'unit': ''},
                     'Белок': {'min': None, 'max': None, 'unit': ''},
-                    'Кетоновые тела': {'min': None, 'max': None, 'unit': ''}
+                    'Кетоновые тела': {'min': 5, 'max': 10, 'unit': ''}
                 }
-                
+
                 for param_name in analysis_parameters:
                     param_value = result_data_dict.get(param_name, 'Нет данных')
                     normal_vals = normal_values.get(param_name, {'min': None, 'max': None, 'unit': ''})
-                    
+
                     # Определяем, в норме ли значение
                     is_normal = None
-                    if normal_vals['min'] is not None and normal_vals['max'] is not None and isinstance(param_value, (int, float)):
+                    if normal_vals['min'] is not None and normal_vals['max'] is not None and isinstance(param_value,
+                                                                                                        (int, float)):
                         is_normal = normal_vals['min'] <= param_value <= normal_vals['max']
-                    
+
                     parameters.append({
                         'name': param_name,
                         'value': param_value,
@@ -682,7 +801,7 @@ class DatabaseConnection:
                         'normal_max': normal_vals['max'],
                         'is_normal': is_normal
                     })
-                
+
             except (json.JSONDecodeError, AttributeError, TypeError) as e:
                 # Если не удалось разобрать JSON, добавляем результат как текст
                 parameters.append({
@@ -693,14 +812,14 @@ class DatabaseConnection:
                     'normal_max': None,
                     'is_normal': None
                 })
-            
+
             result_details['parameters'] = parameters
             return result_details
-            
+
         except Exception as e:
             print(f"Ошибка при получении деталей результата анализа: {e}")
             return None
 
 
 # Создание экземпляра для использования в других модулях
-db = DatabaseConnection() 
+db = DatabaseConnection()

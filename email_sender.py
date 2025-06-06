@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 class EmailSender:
     """Класс для отправки электронных писем с результатами анализов"""
     
-    def __init__(self, smtp_server='smtp.gmail.com', port=587, username='', password='', test_mode=False):
+    def __init__(self, smtp_server='smtp.gmail.com', port=587, username='chinaways.ru@gmail.com', password='jywrid-8nopce-wodvYg', test_mode=True):
         """Инициализация параметров подключения к SMTP серверу"""
         self.smtp_server = smtp_server
         self.port = port
